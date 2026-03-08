@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-// import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 interface DatabaseRow {
   id: number
@@ -21,16 +21,13 @@ export default function Home() {
   async function fetchData() {
     try {
       setLoading(true)
-      // Comment out Supabase call for now to avoid build errors
-      // const { data, error } = await supabase
-      //   .from('your_table_name')
-      //   .select('*')
+      // Ganti 'your_table_name' dengan nama table yang ada di Supabase Anda
+      const { data, error } = await supabase
+        .from('your_table_name')
+        .select('*')
       
-      // if (error) throw error
-      // setData(data || [])
-      
-      // Set dummy data for build
-      setData([])
+      if (error) throw error
+      setData(data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error fetching data')
     } finally {
