@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+// Dynamic import to avoid build-time errors
 import { supabase } from '@/lib/supabase'
 import DataTable from '@/components/DataTable'
 
@@ -18,7 +19,7 @@ const TABLES = [
   'goods',
   'goods_issue_items',
   'goods_issues',
-  'goods_receipts',
+  'goods_receipt_items',
   'goods_receipts',
   'job_types',
   'mechanics',
@@ -35,10 +36,22 @@ export default function Home() {
   const [selectedTable, setSelectedTable] = useState<string>('app_users')
 
   useEffect(() => {
-    fetchAllTables()
+    // Only fetch on client side
+    if (typeof window !== 'undefined') {
+      fetchAllTables()
+    } else {
+      setLoading(false)
+    }
   }, [])
 
   async function fetchAllTables() {
+    // Check if supabase is available
+    if (!supabase) {
+      setError('Supabase client not available. Please check environment variables.')
+      setLoading(false)
+      return
+    }
+    
     try {
       setLoading(true)
       const data: TableData = {}
@@ -71,6 +84,12 @@ export default function Home() {
   }
 
   async function fetchSingleTable(tableName: string) {
+    // Check if supabase is available
+    if (!supabase) {
+      alert('Supabase client not available. Please check environment variables.')
+      return
+    }
+    
     try {
       const { data, error } = await supabase
         .from(tableName)

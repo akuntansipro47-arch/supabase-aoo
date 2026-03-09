@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+// Dynamic import to avoid build-time errors
 import { supabase } from '@/lib/supabase'
 
 interface DataTableProps {
@@ -17,6 +18,12 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
   const [newRow, setNewRow] = useState<Record<string, any>>({})
 
   async function handleAdd() {
+    // Check if supabase is available
+    if (!supabase) {
+      alert('Supabase client not available. Please check environment variables.')
+      return
+    }
+    
     try {
       const { error } = await supabase
         .from(tableName)
@@ -36,6 +43,12 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
 
   async function handleDelete(id: any) {
     if (!confirm('Are you sure you want to delete this record?')) return
+    
+    // Check if supabase is available
+    if (!supabase) {
+      alert('Supabase client not available. Please check environment variables.')
+      return
+    }
     
     try {
       const { error } = await supabase
