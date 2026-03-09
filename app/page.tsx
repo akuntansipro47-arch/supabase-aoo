@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import MenuPanel from '@/components/MenuPanel'
+import DynamicForm from '@/components/DynamicForm'
 import DataTable from '@/components/DataTable'
 
 interface TableData {
@@ -30,10 +32,13 @@ const TABLES = [
 
 export default function Home() {
   const [tableData, setTableData] = useState<TableData>({})
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedTable, setSelectedTable] = useState<string>('app_users')
+  const [selectedTable, setSelectedTable] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [editingData, setEditingData] = useState<Record<string, any> | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [showMenu, setShowMenu] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -44,7 +49,6 @@ export default function Home() {
         if (response.ok) {
           const userData = await response.json()
           setUser(userData.user)
-          fetchAllTables()
         } else {
           // Redirect to login if not authenticated
           router.push('/login')
@@ -67,35 +71,11 @@ export default function Home() {
     }
   }
 
-  async function fetchAllTables() {
+  async function fetchTableData(tableName: string) {
     try {
       setLoading(true)
-      const data: TableData = {}
+      setError(null)
       
-      for (const tableName of TABLES) {
-        try {
-          const response = await fetch(`/api/${tableName}`)
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const tableData = await response.json()
-          data[tableName] = tableData || []
-        } catch (err) {
-          console.warn(`Failed to fetch ${tableName}:`, err)
-          data[tableName] = []
-        }
-      }
-      
-      setTableData(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching data')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function fetchSingleTable(tableName: string) {
-    try {
       const response = await fetch(`/api/${tableName}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -103,8 +83,79 @@ export default function Home() {
       const data = await response.json()
       setTableData(prev => ({ ...prev, [tableName]: data || [] }))
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleFormSubmit(formData: Record<string, any>) {
+    if (!selectedTable) return
+
+    try {
+      const response = await fetch(`/api/${selectedTable}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to save data')
+      }
+
+      // Refresh data and close form
+      await fetchTableData(selectedTable)
+      setShowForm(false)
+      setEditingData(null)
+    } catch (err) {
       alert('Error: ' + (err as Error).message)
     }
+  }
+
+  async function handleDelete(id: any) {
+    if (!selectedTable || !confirm('Apakah Anda yakin ingin menghapus data ini?')) return
+
+    try {
+      const response = await fetch(`/api/${selectedTable}?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete data')
+      }
+
+      // Refresh data
+      await fetchTableData(selectedTable)
+    } catch (err) {
+      alert('Error: ' + (err as Error).message)
+    }
+  }
+
+  function handleEdit(row: any) {
+    setEditingData(row)
+    setShowForm(true)
+  }
+
+  function handleAddNew() {
+    setEditingData(null)
+    setShowForm(true)
+  }
+
+  function handleTableSelect(tableName: string) {
+    setSelectedTable(tableName)
+    setShowMenu(false)
+    fetchTableData(tableName)
+  }
+
+  function handleBackToMenu() {
+    setShowMenu(true)
+    setSelectedTable(null)
+    setShowForm(false)
+    setEditingData(null)
   }
 
   function getTableColumns(data: any[]): string[] {
@@ -114,6 +165,18 @@ export default function Home() {
 
   function formatTableName(tableName: string): string {
     return tableName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
+  // If not authenticated, show loading
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -126,25 +189,31 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">
                 🏭 Supabase Bengkel System
               </h1>
-              <span className="ml-4 text-sm text-gray-500">
-                Complete Workshop Management
-              </span>
+              {selectedTable && (
+                <div className="ml-6 flex items-center">
+                  <button
+                    onClick={handleBackToMenu}
+                    className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    ← Kembali ke Menu
+                  </button>
+                  <span className="ml-3 text-sm text-gray-500">
+                    / {formatTableName(selectedTable)}
+                  </span>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center space-x-4">
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">
-                    👤 {user.name || user.email || 'User'}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                  >
-                    � Logout
-                  </button>
-                </div>
-              )}
+              <span className="text-sm text-gray-700">
+                👤 {user.name || user.email || 'User'}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                🚪 Logout
+              </button>
             </div>
           </div>
         </div>
@@ -152,104 +221,134 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Loading State */}
-        {loading && (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <div className="text-6xl mb-4">⏳</div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Loading Database...</h2>
-            <p className="text-gray-600">Please wait while we fetch all your data</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-            <div className="flex items-center">
-              <div className="text-4xl mr-4">⚠️</div>
-              <div>
-                <h2 className="text-xl font-semibold text-red-800 mb-2">Connection Error</h2>
-                <p className="text-red-600">{error}</p>
-                <p className="text-sm text-red-500 mt-2">Please check your environment variables and try again.</p>
+        {showMenu ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Menu Panel */}
+            <div className="lg:col-span-1">
+              <MenuPanel
+                onTableSelect={handleTableSelect}
+                selectedTable={null}
+              />
+            </div>
+            
+            {/* Welcome Panel */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                <div className="text-6xl mb-4">🏭</div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  Selamat Datang di Sistem Bengkel
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Sistem manajemen lengkap untuk bengkel Anda. Pilih menu di kiri untuk memulai mengelola data.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-left">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-800 mb-2">📊 Master Data</h3>
+                    <p className="text-sm text-blue-600">
+                      Kelola data dasar seperti pengguna, mekanik, barang, dan akun.
+                    </p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-800 mb-2">💰 Transaksi</h3>
+                    <p className="text-sm text-green-600">
+                      Kelola transaksi pembelian, penjualan, dan keuangan.
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-purple-800 mb-2">📦 Inventory</h3>
+                    <p className="text-sm text-purple-600">
+                      Pantau stok barang dan sparepart secara real-time.
+                    </p>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-orange-800 mb-2">📈 Laporan</h3>
+                    <p className="text-sm text-orange-600">
+                      Lihat laporan keuangan dan operasional bengkel.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        )}
-
-        {/* Main Dashboard */}
-        {!loading && !error && user && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            {/* Table Selector */}
-            <div className="mb-6">
-              <label className="block text-lg font-semibold text-gray-800 mb-3">
-                📊 Select Table to Manage:
-              </label>
-              <select
-                value={selectedTable}
-                onChange={(e) => {
-                  setSelectedTable(e.target.value)
-                  fetchSingleTable(e.target.value)
-                }}
-                className="block w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-              >
-                {TABLES.map(table => (
-                  <option key={table} value={table}>
-                    📋 {formatTableName(table)} ({tableData[table]?.length || 0} records)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Selected Table */}
+        ) : (
+          <div className="space-y-6">
+            {/* Table Header */}
             {selectedTable && (
-              <DataTable
-                tableName={selectedTable}
-                data={tableData[selectedTable] || []}
-                columns={getTableColumns(tableData[selectedTable] || [])}
-                onRefresh={() => fetchSingleTable(selectedTable)}
-                onEdit={(row) => {
-                  alert('Edit functionality coming soon! Record: ' + JSON.stringify(row, null, 2))
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      📋 {formatTableName(selectedTable)}
+                    </h2>
+                    <p className="text-gray-600">
+                      Kelola data {formatTableName(selectedTable).toLowerCase()}
+                    </p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleAddNew}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      ➕ Tambah Data
+                    </button>
+                    <button
+                      onClick={() => fetchTableData(selectedTable)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      🔄 Refresh
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form */}
+            {showForm && (
+              <DynamicForm
+                tableName={selectedTable!}
+                onSubmit={handleFormSubmit}
+                onCancel={() => {
+                  setShowForm(false)
+                  setEditingData(null)
                 }}
-                onDelete={(id) => {
-                  // Delete is handled in DataTable component
-                }}
+                initialData={editingData || {}}
+                isEditing={!!editingData}
               />
             )}
 
-            {/* Summary Cards */}
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">📈 Database Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {TABLES.map(table => (
-                  <div 
-                    key={table} 
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg ${
-                      selectedTable === table 
-                        ? 'border-blue-500 bg-blue-50 shadow-lg' 
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    onClick={() => {
-                      setSelectedTable(table)
-                      fetchSingleTable(table)
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm font-medium text-gray-600">
-                        {formatTableName(table)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {tableData[table]?.length || 0} items
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">
-                      {tableData[table]?.length || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Records
-                    </div>
-                  </div>
-                ))}
+            {/* Loading State */}
+            {loading && (
+              <div className="bg-white rounded-lg shadow p-12 text-center">
+                <div className="text-6xl mb-4">⏳</div>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Loading Data...</h2>
+                <p className="text-gray-600">Mengambil data dari server</p>
               </div>
-            </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="flex items-center">
+                  <div className="text-4xl mr-4">⚠️</div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
+                    <p className="text-red-600">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Data Table */}
+            {!loading && !error && !showForm && selectedTable && tableData[selectedTable] && (
+              <DataTable
+                tableName={selectedTable}
+                data={tableData[selectedTable]}
+                columns={getTableColumns(tableData[selectedTable])}
+                onRefresh={() => fetchTableData(selectedTable)}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
           </div>
         )}
       </div>
