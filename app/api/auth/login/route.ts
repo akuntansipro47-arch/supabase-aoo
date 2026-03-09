@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseClient } from '@/lib/supabase-server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +11,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createSupabaseClient()
-    
     // For demo purposes - accept demo credentials
     if (email === 'demo@bengkel.com' && password === 'demo123') {
       return NextResponse.json({
@@ -28,25 +25,11 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Try to authenticate with Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    
-    if (error) {
-      console.error('Auth error:', error)
-      return NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      )
-    }
-    
-    return NextResponse.json({
-      success: true,
-      user: data.user,
-      message: 'Login successful'
-    })
+    // For now, only accept demo credentials
+    return NextResponse.json(
+      { error: 'Invalid credentials. Use demo@bengkel.com / demo123' },
+      { status: 401 }
+    )
     
   } catch (err) {
     console.error('Login error:', err)
