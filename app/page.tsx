@@ -80,12 +80,17 @@ export default function Home() {
       }
       
       const data = await response.json()
-      console.log(`✅ Fetched ${data.length} records for ${tableName}`)
+      console.log(`✅ Fetched ${data.length} records for ${tableName}:`, data.slice(0, 2))
+      
+      // Ensure data is an array
+      const dataArray = Array.isArray(data) ? data : []
       
       setTableData(prev => ({
         ...prev,
-        [tableName]: data
+        [tableName]: dataArray
       }))
+      
+      console.log(`💾 Stored ${dataArray.length} records in state for ${tableName}`)
     } catch (err) {
       console.error('❌ Fetch error:', err)
       setError(`Gagal memuat data ${tableName}: ${(err as Error).message}`)
@@ -180,8 +185,17 @@ export default function Home() {
   }
 
   function getTableColumns(data: any[]): string[] {
-    if (!data || data.length === 0) return []
-    return Object.keys(data[0])
+    if (!data || data.length === 0) {
+      console.log('❌ No data available for column extraction')
+      return ['id', 'name', 'created_at'] // Default columns
+    }
+    
+    const firstRow = data[0]
+    const columns = Object.keys(firstRow)
+    
+    console.log(`📊 Extracted columns from first row:`, columns)
+    
+    return columns
   }
 
   function formatTableName(tableName: string): string {

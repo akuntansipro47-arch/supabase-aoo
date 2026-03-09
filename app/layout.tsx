@@ -1,14 +1,23 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#3b82f6',
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://your-app.vercel.app'),
   title: 'Sistem Bengkel - PWA',
   description: 'Sistem manajemen bengkel lengkap dengan Progressive Web App',
   manifest: '/manifest.json',
-  themeColor: '#3b82f6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -36,13 +45,6 @@ export const metadata: Metadata = {
     title: 'Sistem Bengkel - PWA',
     description: 'Sistem manajemen bengkel lengkap dengan Progressive Web App',
     images: ['/icons/icon-512x512.png'],
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover',
   },
 }
 
