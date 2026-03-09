@@ -1,43 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Mock schema untuk demo purposes
-const mockSchemas: Record<string, any[]> = {
-  'app_users': [
-    { name: 'id', type: 'integer', required: true, label: 'ID' },
-    { name: 'name', type: 'text', required: true, label: 'Name' },
-    { name: 'email', type: 'email', required: true, label: 'Email' },
-    { name: 'role', type: 'text', required: true, label: 'Role' },
-    { name: 'created_at', type: 'datetime', required: true, label: 'Created At' }
-  ],
-  'mechanics': [
-    { name: 'id', type: 'integer', required: true, label: 'ID' },
-    { name: 'name', type: 'text', required: true, label: 'Name' },
-    { name: 'specialization', type: 'text', required: true, label: 'Specialization' },
-    { name: 'phone', type: 'text', required: false, label: 'Phone' },
-    { name: 'created_at', type: 'datetime', required: true, label: 'Created At' }
-  ],
-  'goods': [
-    { name: 'id', type: 'integer', required: true, label: 'ID' },
-    { name: 'name', type: 'text', required: true, label: 'Name' },
-    { name: 'code', type: 'text', required: true, label: 'Code' },
-    { name: 'price', type: 'decimal', required: true, label: 'Price' },
-    { name: 'stock', type: 'integer', required: true, label: 'Stock' },
-    { name: 'created_at', type: 'datetime', required: true, label: 'Created At' }
-  ]
-}
+import { createSupabaseClient } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest, { params }: { params: { tableName: string } }) {
   try {
     const { tableName } = params
+    const supabase = createSupabaseClient()
     
-    // Return mock schema atau default schema
-    const columns = mockSchemas[tableName] || [
-      { name: 'id', type: 'integer', required: true, label: 'ID' },
-      { name: 'name', type: 'text', required: true, label: 'Name' },
-      { name: 'created_at', type: 'datetime', required: true, label: 'Created At' }
-    ]
+    // Get sample data to infer schema
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1)
+    
+    if (error) {
+      console.error('Supabase error:', error)
+      // Return default schema if table doesn't exist
+      if (error.message.includes('does not exist') || error.message.includes('relation')) {
+        return NextResponse.json({
+          columns: [
+            { name: 'id', type: 'integer', required: true, label: 'ID' },
+            { name: 'name', type: 'text', required: true, label: 'Name' },
+            { name: 'created_at', type: 'datetime', required: true, label: 'Created At' },
+            { name: 'updated_at', type: 'datetime', required: false, label: 'Updated At' }
+          ]
+        })
+      }
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+    
+    if (!data || data.length === 0) {
+      // Return default schema if no data
+      return NextResponse.json({
+        columns: [
+          { name: 'id', type: 'integer', required: true, label: 'ID' },
+          { name: 'name', type: 'text', required: true, label: 'Name' },
+          { name: 'created_at', type: 'datetime', required: true, label: 'Created At' },
+          { name: 'updated_at', type: 'datetime', required: false, label: 'Updated At' }
+        ]
+      })
+    }
+    
+    // Infer schema from data
+    const sampleRow = data[0]
+    const columns = Object.keys(sampleRow).map(key => {
+      const value = sampleRow[key]
+      let type = 'text'
+      let required = false
+      let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      
+      // Infer type from value
+      if (value === null || value === undefined) {
+        type = 'text'
+      } else if (typeof value === 'number') {
+        type = Number.isInteger(value) ? 'integer' : 'decimal'
+      } else if (typeof value === 'boolean') {
+        type = 'boolean'
+      } else if (value instanceof Date || (typeof value === 'string' && value.includes('T'))) {
+        type = 'datetime'
+      } else if (typeof value === 'string') {
+        if (value.includes('@')) {
+          type = 'email'
+        } else if (value.includes('http')) {
+          type = 'url'
+        } else if (value.length > 200) {
+          type = 'textarea'
+        } else {
+          type = 'text'
+        }
+      }
+      
+      // Determine if field is required
+      if (key === 'id' || key.includes('_id') || key === 'name' || key === 'email') {
+        required = true
+      }
+      
+      return {
+        name: key,
+        type,
+        required,
+        label
+      }
+    })
     
     return NextResponse.json({ columns })
+    
   } catch (err) {
     console.error('Error fetching schema:', err)
     return NextResponse.json(
