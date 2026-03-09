@@ -18,25 +18,23 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
   const [newRow, setNewRow] = useState<Record<string, any>>({})
 
   async function handleAdd() {
-    // Check if supabase is available
-    if (!supabase) {
-      alert('Supabase client not available. Please check environment variables.')
-      return
-    }
-    
     try {
-      const { data, error } = await supabase
-        .from(tableName)
-        .insert([newRow] as any)
-        .select()
+      const response = await fetch(`/api/${tableName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newRow),
+      })
       
-      if (!error) {
-        setShowAddForm(false)
-        setNewRow({})
-        onRefresh()
-      } else {
-        alert('Error adding record: ' + error.message)
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to add record')
       }
+      
+      setShowAddForm(false)
+      setNewRow({})
+      onRefresh()
     } catch (err) {
       alert('Error: ' + (err as Error).message)
     }
@@ -45,23 +43,17 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
   async function handleDelete(id: any) {
     if (!confirm('Are you sure you want to delete this record?')) return
     
-    // Check if supabase is available
-    if (!supabase) {
-      alert('Supabase client not available. Please check environment variables.')
-      return
-    }
-    
     try {
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/${tableName}?id=${id}`, {
+        method: 'DELETE',
+      })
       
-      if (!error) {
-        onRefresh()
-      } else {
-        alert('Error deleting record: ' + error.message)
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete record')
       }
+      
+      onRefresh()
     } catch (err) {
       alert('Error: ' + (err as Error).message)
     }
