@@ -1,25 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseClient } from '@/lib/supabase-server'
+
+// Mock data untuk demo purposes
+const mockData: Record<string, any[]> = {
+  'app_users': [
+    { id: 1, name: 'Admin User', email: 'admin@bengkel.com', role: 'admin', created_at: '2024-01-01' },
+    { id: 2, name: 'Demo User', email: 'demo@bengkel.com', role: 'user', created_at: '2024-01-02' }
+  ],
+  'mechanics': [
+    { id: 1, name: 'Ahmad Budi', specialization: 'Engine', phone: '08123456789', created_at: '2024-01-01' },
+    { id: 2, name: 'Siti Aminah', specialization: 'Electrical', phone: '08123456790', created_at: '2024-01-02' }
+  ],
+  'goods': [
+    { id: 1, name: 'Oli Mesin', code: 'OLI001', price: 50000, stock: 100, created_at: '2024-01-01' },
+    { id: 2, name: 'Filter Udara', code: 'FLT001', price: 25000, stock: 50, created_at: '2024-01-02' }
+  ]
+}
 
 export async function GET(request: NextRequest, { params }: { params: { tableName: string } }) {
   try {
     const { tableName } = params
-    const supabase = createSupabaseClient()
     
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .limit(50)
+    // Return mock data atau empty array
+    const data = mockData[tableName] || []
     
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
-    
-    return NextResponse.json(data || [])
+    return NextResponse.json(data)
   } catch (err) {
     console.error('API error:', err)
     return NextResponse.json(
@@ -33,22 +37,15 @@ export async function POST(request: NextRequest, { params }: { params: { tableNa
   try {
     const { tableName } = params
     const body = await request.json()
-    const supabase = createSupabaseClient()
     
-    const { data, error } = await supabase
-      .from(tableName)
-      .insert([body])
-      .select()
-    
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
+    // Mock create - return the data with ID
+    const newItem = {
+      id: Date.now(),
+      ...body,
+      created_at: new Date().toISOString()
     }
     
-    return NextResponse.json(data)
+    return NextResponse.json([newItem])
   } catch (err) {
     console.error('API error:', err)
     return NextResponse.json(
@@ -71,21 +68,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { table
       )
     }
     
-    const supabase = createSupabaseClient()
-    
-    const { error } = await supabase
-      .from(tableName)
-      .delete()
-      .eq('id', id)
-    
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
-    
+    // Mock delete - just return success
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('API error:', err)
