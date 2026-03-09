@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vercel Deployment Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vercel Deployment Debug Tool</h1>
+    
+    <div class="test info">
+        <h3>📊 Deployment Info</h3>
+        <p><strong>Build Time:</strong> <span id="buildTime"></span></p>
+        <p><strong>Version:</strong> <span id="version"></span></p>
+        <p><strong>URL:</strong> <span id="currentUrl"></span></p>
+    </div>
+
+    <div class="test">
+        <h3>🔗 API Connection Test</h3>
+        <button onclick="testAPI()">Test API Connection</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>📋 Tables Test</h3>
+        <button onclick="testTables()">Test Tables API</button>
+        <div id="tablesResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>🛒 Purchase Orders Test</h3>
+        <button onclick="testPurchaseOrders()">Test Purchase Orders</button>
+        <div id="poResult"></div>
+    </div>
+
+    <script>
+        // Load version info
+        fetch('/version.txt')
+            .then(response => response.text())
+            .then(text => {
+                document.getElementById('buildTime').textContent = text.match(/BUILD_TIME: (.+)/)?.[1] || 'Unknown';
+                document.getElementById('version').textContent = text.match(/VERSION: (.+)/)?.[1] || 'Unknown';
+            })
+            .catch(() => {
+                document.getElementById('buildTime').textContent = 'Not available';
+                document.getElementById('version').textContent = 'Not available';
+            });
+
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        async function testAPI() {
+            const result = document.getElementById('apiResult');
+            try {
+                const response = await fetch('/api/test-connection');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✅ API Success: ${data.message}<br>Tables: ${data.tables?.length || 0}</div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ API Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testTables() {
+            const result = document.getElementById('tablesResult');
+            try {
+                const response = await fetch('/api/tables');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✅ Tables Success: ${data.length} tables found<br>First: ${data[0]?.label || 'None'}</div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Tables Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testPurchaseOrders() {
+            const result = document.getElementById('poResult');
+            try {
+                const response = await fetch('/api/purchase_orders');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✅ PO Success: ${data.length} records found<br>Sample: ${data[0]?.po_number || 'None'}</div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ PO Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
