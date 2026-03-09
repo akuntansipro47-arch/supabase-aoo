@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '@/lib/supabase-server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,17 +12,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { error: 'Environment variables not configured' },
-        { status: 500 }
-      )
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = createSupabaseClient()
     
     // For demo purposes - accept demo credentials
     if (email === 'demo@bengkel.com' && password === 'demo123') {
@@ -45,6 +35,7 @@ export async function POST(request: NextRequest) {
     })
     
     if (error) {
+      console.error('Auth error:', error)
       return NextResponse.json(
         { error: error.message },
         { status: 401 }
