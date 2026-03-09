@@ -8,6 +8,8 @@
         .success { background: #d4edda; border: 1px solid #c3e6cb; }
         .error { background: #f8d7da; border: 1px solid #f5c6cb; }
         .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -18,6 +20,7 @@
         <p><strong>Build Time:</strong> <span id="buildTime"></span></p>
         <p><strong>Version:</strong> <span id="version"></span></p>
         <p><strong>URL:</strong> <span id="currentUrl"></span></p>
+        <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
     </div>
 
     <div class="test">
@@ -38,6 +41,24 @@
         <div id="poResult"></div>
     </div>
 
+    <div class="test">
+        <h3>🔧 Mechanics Test</h3>
+        <button onclick="testMechanics()">Test Mechanics API</button>
+        <div id="mechanicsResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>🌐 Network Diagnostics</h3>
+        <button onclick="testNetwork()">Test Network</button>
+        <div id="networkResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>📝 Environment Check</h3>
+        <button onclick="testEnvironment()">Test Environment</button>
+        <div id="envResult"></div>
+    </div>
+
     <script>
         // Load version info
         fetch('/version.txt')
@@ -52,24 +73,52 @@
             });
 
         document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
 
         async function testAPI() {
             const result = document.getElementById('apiResult');
+            result.innerHTML = '<div class="info">🔄 Testing API connection...</div>';
+            
             try {
+                console.log('Testing API at:', '/api/test-connection');
                 const response = await fetch('/api/test-connection');
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
-                result.innerHTML = `<div class="success">✅ API Success: ${data.message}<br>Tables: ${data.tables?.length || 0}</div>`;
+                console.log('Response data:', data);
+                
+                result.innerHTML = `
+                    <div class="success">✅ API Success: ${data.message}</div>
+                    <div class="info">📊 Tables found: ${data.tables?.length || 0}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
             } catch (error) {
-                result.innerHTML = `<div class="error">❌ API Error: ${error.message}</div>`;
+                console.error('API Error:', error);
+                result.innerHTML = `
+                    <div class="error">❌ API Error: ${error.message}</div>
+                    <div class="warning">⚠️ Check console for more details</div>
+                `;
             }
         }
 
         async function testTables() {
             const result = document.getElementById('tablesResult');
+            result.innerHTML = '<div class="info">🔄 Testing tables API...</div>';
+            
             try {
                 const response = await fetch('/api/tables');
                 const data = await response.json();
-                result.innerHTML = `<div class="success">✅ Tables Success: ${data.length} tables found<br>First: ${data[0]?.label || 'None'}</div>`;
+                
+                result.innerHTML = `
+                    <div class="success">✅ Tables Success: ${data.length} tables found</div>
+                    <div class="info">📋 First table: ${data[0]?.label || 'None'}</div>
+                    <pre>${JSON.stringify(data.slice(0, 2), null, 2)}</pre>
+                `;
             } catch (error) {
                 result.innerHTML = `<div class="error">❌ Tables Error: ${error.message}</div>`;
             }
@@ -77,12 +126,83 @@
 
         async function testPurchaseOrders() {
             const result = document.getElementById('poResult');
+            result.innerHTML = '<div class="info">🔄 Testing purchase orders...</div>';
+            
             try {
                 const response = await fetch('/api/purchase_orders');
                 const data = await response.json();
-                result.innerHTML = `<div class="success">✅ PO Success: ${data.length} records found<br>Sample: ${data[0]?.po_number || 'None'}</div>`;
+                
+                result.innerHTML = `
+                    <div class="success">✅ PO Success: ${data.length} records found</div>
+                    <div class="info">🛒 Sample PO: ${data[0]?.po_number || 'None'}</div>
+                    <pre>${JSON.stringify(data.slice(0, 1), null, 2)}</pre>
+                `;
             } catch (error) {
                 result.innerHTML = `<div class="error">❌ PO Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testMechanics() {
+            const result = document.getElementById('mechanicsResult');
+            result.innerHTML = '<div class="info">🔄 Testing mechanics...</div>';
+            
+            try {
+                const response = await fetch('/api/mechanics');
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <div class="success">✅ Mechanics Success: ${data.length} records found</div>
+                    <div class="info">👨‍🔧 Sample mechanic: ${data[0]?.name || 'None'}</div>
+                    <pre>${JSON.stringify(data.slice(0, 1), null, 2)}</pre>
+                `;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Mechanics Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testNetwork() {
+            const result = document.getElementById('networkResult');
+            result.innerHTML = '<div class="info">🔄 Testing network...</div>';
+            
+            const tests = [
+                { name: 'Root path', url: '/' },
+                { name: 'API test', url: '/api/test-connection' },
+                { name: 'Tables API', url: '/api/tables' },
+            ];
+            
+            let results = [];
+            
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url);
+                    results.push(`✅ ${test.name}: ${response.status}`);
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+            
+            result.innerHTML = `
+                <div class="info">🌐 Network Test Results:</div>
+                <pre>${results.join('\n')}</pre>
+            `;
+        }
+
+        async function testEnvironment() {
+            const result = document.getElementById('envResult');
+            result.innerHTML = '<div class="info">🔄 Testing environment...</div>';
+            
+            try {
+                const response = await fetch('/api/env-check');
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <div class="success">✅ Environment Check Complete</div>
+                    <div class="info">🔧 Supabase URL: ${data.supabaseUrl ? 'Set' : 'Not set'}</div>
+                    <div class="info">🔑 Supabase Key: ${data.supabaseKey ? 'Set' : 'Not set'}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Environment Error: ${error.message}</div>`;
             }
         }
     </script>
