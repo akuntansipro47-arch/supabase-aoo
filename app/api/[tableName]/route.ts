@@ -8,20 +8,42 @@ export async function GET(request: NextRequest, { params }: { params: { tableNam
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
-    console.log('Environment check:', { 
-      hasUrl: !!supabaseUrl, 
-      hasKey: !!supabaseKey,
-      tableName 
-    })
+    console.log('=== DEBUG INFO ===')
+    console.log('Table Name:', tableName)
+    console.log('Supabase URL:', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'NOT_SET')
+    console.log('Supabase Key:', supabaseKey ? supabaseKey.substring(0, 30) + '...' : 'NOT_SET')
+    console.log('Node Env:', process.env.NODE_ENV)
+    console.log('==================')
     
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase environment variables')
+      console.error('Missing environment variables')
       return NextResponse.json({ 
         error: 'Database tidak dikonfigurasi. Silakan tambahkan NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di environment variables.' 
       }, { status: 500 })
     }
     
+    // Test connection first
     const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    try {
+      // Simple health check
+      const { data: testData, error: testError } = await supabase
+        .from('app_users')
+        .select('count')
+        .limit(1)
+      
+      if (testError && !testError.message.includes('does not exist')) {
+        console.error('Connection test failed:', testError)
+        return NextResponse.json({ 
+          error: `Koneksi database gagal: ${testError.message}` 
+        }, { status: 500 })
+      }
+    } catch (connErr) {
+      console.error('Connection error:', connErr)
+      return NextResponse.json({ 
+        error: `Tidak dapat terhubung ke database: ${(connErr as Error).message}` 
+      }, { status: 500 })
+    }
     
     console.log(`Fetching data from table: ${tableName}`)
     
@@ -36,13 +58,13 @@ export async function GET(request: NextRequest, { params }: { params: { tableNam
       // Check specific error types
       if (error.message.includes('does not exist') || error.message.includes('relation')) {
         return NextResponse.json({ 
-          error: `Table '${tableName}' tidak ditemukan di database. Silakan buat table terlebih dahulu.` 
+          error: `Table '${tableName}' tidak ditemukan di database. Tersedia tables: app_users, mechanics, goods, dll.` 
         }, { status: 404 })
       }
       
       if (error.message.includes('permission')) {
         return NextResponse.json({ 
-          error: `Tidak memiliki akses ke table '${tableName}'. Silakan cek permission di Supabase.` 
+          error: `Tidak memiliki akses ke table '${tableName}'. Silakan cek RLS policies di Supabase.` 
         }, { status: 403 })
       }
       
