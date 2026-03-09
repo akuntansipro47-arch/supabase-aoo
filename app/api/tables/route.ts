@@ -7,25 +7,21 @@ export async function GET() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
     if (!supabaseUrl || !supabaseKey) {
-      // Return hardcoded tables if not configured
+      // Return hardcoded tables for bengkel system
       const tables = [
-        { table_name: 'app_users', label: 'Pengguna', icon: '👥', description: 'Manajemen pengguna sistem', category: 'Master Data' },
-        { table_name: 'company_profile', label: 'Profil Perusahaan', icon: '🏢', description: 'Informasi perusahaan', category: 'Master Data' },
-        { table_name: 'mechanics', label: 'Mekanik', icon: '🔧', description: 'Data mekanik bengkel', category: 'Master Data' },
-        { table_name: 'job_types', label: 'Jenis Pekerjaan', icon: '🛠️', description: 'Kategori pekerjaan bengkel', category: 'Master Data' },
-        { table_name: 'goods', label: 'Barang/Sparepart', icon: '📦', description: 'Stok barang dan sparepart', category: 'Inventory' },
-        { table_name: 'chart_of_accounts', label: 'Akun', icon: '📊', description: 'Struktur akun keuangan', category: 'Accounting' },
-        { table_name: 'periods', label: 'Periode', icon: '📅', description: 'Periode akuntansi', category: 'Accounting' },
-        { table_name: 'budget_periods', label: 'Periode Anggaran', icon: '💰', description: 'Periode anggaran tahunan', category: 'Accounting' },
-        { table_name: 'budget_allocations', label: 'Alokasi Anggaran', icon: '💸', description: 'Alokasi dana per departemen', category: 'Accounting' },
-        { table_name: 'goods_receipts', label: 'Penerimaan Barang', icon: '📥', description: 'Transaksi penerimaan barang', category: 'Inventory' },
-        { table_name: 'goods_receipt_items', label: 'Item Penerimaan', icon: '📋', description: 'Detail item penerimaan barang', category: 'Inventory' },
-        { table_name: 'goods_issues', label: 'Pengeluaran Barang', icon: '📤', description: 'Transaksi pengeluaran barang', category: 'Inventory' },
-        { table_name: 'goods_issue_items', label: 'Item Pengeluaran', icon: '📝', description: 'Detail item pengeluaran barang', category: 'Inventory' },
-        { table_name: 'purchase_orders', label: 'Purchase Order', icon: '🛒', description: 'Order pembelian barang', category: 'Purchasing' },
-        { table_name: 'purchase_order_items', label: 'Item Purchase Order', icon: '📄', description: 'Detail item purchase order', category: 'Purchasing' },
-        { table_name: 'purchase_invoices', label: 'Invoice Pembelian', icon: '🧾', description: 'Invoice pembelian supplier', category: 'Purchasing' },
-        { table_name: 'cash_bank_transactions', label: 'Transaksi Kas/Bank', icon: '💳', description: 'Transaksi keuangan kas dan bank', category: 'Accounting' }
+        // Database Master
+        { table_name: 'kendaraan', label: 'Data Kendaraan', icon: '🚗', description: 'Data kendaraan pelanggan', category: 'Database Master' },
+        { table_name: 'mekanik', label: 'Nama Mekanik', icon: '�‍�🔧', description: 'Data mekanik bengkel', category: 'Database Master' },
+        { table_name: 'supplier', label: 'Supplier', icon: '�', description: 'Data supplier barang', category: 'Database Master' },
+        { table_name: 'barang_jasa', label: 'Barang/Jasa', icon: '�', description: 'Data barang dan jasa service', category: 'Database Master' },
+        { table_name: 'pekerjaan_service', label: 'Pekerjaan/Jasa Service', icon: '⚙️', description: 'Data pekerjaan service', category: 'Database Master' },
+        { table_name: 'profile_perusahaan', label: 'Profile Perusahaan', icon: '🏢', description: 'Profil perusahaan/bengkel', category: 'Database Master' },
+        
+        // Transaksi
+        { table_name: 'kendaraan_masuk', label: 'Entry Kendaraan Masuk', icon: '�', description: 'Penerimaan kendaraan masuk', category: 'Transaksi' },
+        { table_name: 'work_order', label: 'Work Order (WO)', icon: '�', description: 'Data Work Order', category: 'Transaksi' },
+        { table_name: 'purchase_order', label: 'Purchasing (PO)', icon: '�', description: 'Purchase Order barang', category: 'Transaksi' },
+        { table_name: 'estimasi', label: 'Estimasi', icon: '�', description: 'Data estimasi service', category: 'Transaksi' }
       ]
       
       return NextResponse.json(tables)
@@ -43,25 +39,21 @@ export async function GET() {
     
     if (error) {
       console.error('Supabase error:', error)
-      // Return hardcoded tables if information_schema not accessible
+      // Return hardcoded bengkel tables
       const fallbackTables = [
-        { table_name: 'app_users', label: 'Pengguna', icon: '👥', description: 'Manajemen pengguna sistem', category: 'Master Data' },
-        { table_name: 'company_profile', label: 'Profil Perusahaan', icon: '🏢', description: 'Informasi perusahaan', category: 'Master Data' },
-        { table_name: 'mechanics', label: 'Mekanik', icon: '🔧', description: 'Data mekanik bengkel', category: 'Master Data' },
-        { table_name: 'job_types', label: 'Jenis Pekerjaan', icon: '🛠️', description: 'Kategori pekerjaan bengkel', category: 'Master Data' },
-        { table_name: 'goods', label: 'Barang/Sparepart', icon: '📦', description: 'Stok barang dan sparepart', category: 'Inventory' },
-        { table_name: 'chart_of_accounts', label: 'Akun', icon: '📊', description: 'Struktur akun keuangan', category: 'Accounting' },
-        { table_name: 'periods', label: 'Periode', icon: '📅', description: 'Periode akuntansi', category: 'Accounting' },
-        { table_name: 'budget_periods', label: 'Periode Anggaran', icon: '💰', description: 'Periode anggaran tahunan', category: 'Accounting' },
-        { table_name: 'budget_allocations', label: 'Alokasi Anggaran', icon: '💸', description: 'Alokasi dana per departemen', category: 'Accounting' },
-        { table_name: 'goods_receipts', label: 'Penerimaan Barang', icon: '📥', description: 'Transaksi penerimaan barang', category: 'Inventory' },
-        { table_name: 'goods_receipt_items', label: 'Item Penerimaan', icon: '📋', description: 'Detail item penerimaan barang', category: 'Inventory' },
-        { table_name: 'goods_issues', label: 'Pengeluaran Barang', icon: '📤', description: 'Transaksi pengeluaran barang', category: 'Inventory' },
-        { table_name: 'goods_issue_items', label: 'Item Pengeluaran', icon: '📝', description: 'Detail item pengeluaran barang', category: 'Inventory' },
-        { table_name: 'purchase_orders', label: 'Purchase Order', icon: '🛒', description: 'Order pembelian barang', category: 'Purchasing' },
-        { table_name: 'purchase_order_items', label: 'Item Purchase Order', icon: '📄', description: 'Detail item purchase order', category: 'Purchasing' },
-        { table_name: 'purchase_invoices', label: 'Invoice Pembelian', icon: '🧾', description: 'Invoice pembelian supplier', category: 'Purchasing' },
-        { table_name: 'cash_bank_transactions', label: 'Transaksi Kas/Bank', icon: '💳', description: 'Transaksi keuangan kas dan bank', category: 'Accounting' }
+        // Database Master
+        { table_name: 'kendaraan', label: 'Data Kendaraan', icon: '🚗', description: 'Data kendaraan pelanggan', category: 'Database Master' },
+        { table_name: 'mekanik', label: 'Nama Mekanik', icon: '👨‍🔧', description: 'Data mekanik bengkel', category: 'Database Master' },
+        { table_name: 'supplier', label: 'Supplier', icon: '�', description: 'Data supplier barang', category: 'Database Master' },
+        { table_name: 'barang_jasa', label: 'Barang/Jasa', icon: '�', description: 'Data barang dan jasa service', category: 'Database Master' },
+        { table_name: 'pekerjaan_service', label: 'Pekerjaan/Jasa Service', icon: '⚙️', description: 'Data pekerjaan service', category: 'Database Master' },
+        { table_name: 'profile_perusahaan', label: 'Profile Perusahaan', icon: '🏢', description: 'Profil perusahaan/bengkel', category: 'Database Master' },
+        
+        // Transaksi
+        { table_name: 'kendaraan_masuk', label: 'Entry Kendaraan Masuk', icon: '�', description: 'Penerimaan kendaraan masuk', category: 'Transaksi' },
+        { table_name: 'work_order', label: 'Work Order (WO)', icon: '�', description: 'Data Work Order', category: 'Transaksi' },
+        { table_name: 'purchase_order', label: 'Purchasing (PO)', icon: '�', description: 'Purchase Order barang', category: 'Transaksi' },
+        { table_name: 'estimasi', label: 'Estimasi', icon: '📝', description: 'Data estimasi service', category: 'Transaksi' }
       ]
       
       return NextResponse.json(fallbackTables)
@@ -73,107 +65,65 @@ export async function GET() {
       let label, icon, description, category
       
       switch(tableName) {
-        case 'app_users':
-          label = 'Pengguna'
-          icon = '👥'
-          description = 'Manajemen pengguna sistem'
-          category = 'Master Data'
+        case 'kendaraan':
+          label = 'Data Kendaraan'
+          icon = '�'
+          description = 'Data kendaraan pelanggan'
+          category = 'Database Master'
           break
-        case 'company_profile':
-          label = 'Profil Perusahaan'
-          icon = '🏢'
-          description = 'Informasi perusahaan'
-          category = 'Master Data'
-          break
-        case 'mechanics':
-          label = 'Mekanik'
-          icon = '🔧'
+        case 'mekanik':
+          label = 'Nama Mekanik'
+          icon = '�‍�🔧'
           description = 'Data mekanik bengkel'
-          category = 'Master Data'
+          category = 'Database Master'
           break
-        case 'job_types':
-          label = 'Jenis Pekerjaan'
-          icon = '🛠️'
-          description = 'Kategori pekerjaan bengkel'
-          category = 'Master Data'
+        case 'supplier':
+          label = 'Supplier'
+          icon = '�'
+          description = 'Data supplier barang'
+          category = 'Database Master'
           break
-        case 'goods':
-          label = 'Barang/Sparepart'
-          icon = '📦'
-          description = 'Stok barang dan sparepart'
-          category = 'Inventory'
+        case 'barang_jasa':
+          label = 'Barang/Jasa'
+          icon = '�'
+          description = 'Data barang dan jasa service'
+          category = 'Database Master'
           break
-        case 'chart_of_accounts':
-          label = 'Akun'
-          icon = '📊'
-          description = 'Struktur akun keuangan'
-          category = 'Accounting'
+        case 'pekerjaan_service':
+          label = 'Pekerjaan/Jasa Service'
+          icon = '⚙️'
+          description = 'Data pekerjaan service'
+          category = 'Database Master'
           break
-        case 'periods':
-          label = 'Periode'
-          icon = '📅'
-          description = 'Periode akuntansi'
-          category = 'Accounting'
+        case 'profile_perusahaan':
+          label = 'Profile Perusahaan'
+          icon = '🏢'
+          description = 'Profil perusahaan/bengkel'
+          category = 'Database Master'
           break
-        case 'budget_periods':
-          label = 'Periode Anggaran'
-          icon = '💰'
-          description = 'Periode anggaran tahunan'
-          category = 'Accounting'
+        case 'kendaraan_masuk':
+          label = 'Entry Kendaraan Masuk'
+          icon = '�'
+          description = 'Penerimaan kendaraan masuk'
+          category = 'Transaksi'
           break
-        case 'budget_allocations':
-          label = 'Alokasi Anggaran'
-          icon = '💸'
-          description = 'Alokasi dana per departemen'
-          category = 'Accounting'
+        case 'work_order':
+          label = 'Work Order (WO)'
+          icon = '�'
+          description = 'Data Work Order'
+          category = 'Transaksi'
           break
-        case 'goods_receipts':
-          label = 'Penerimaan Barang'
-          icon = '📥'
-          description = 'Transaksi penerimaan barang'
-          category = 'Inventory'
+        case 'purchase_order':
+          label = 'Purchasing (PO)'
+          icon = '�'
+          description = 'Purchase Order barang'
+          category = 'Transaksi'
           break
-        case 'goods_receipt_items':
-          label = 'Item Penerimaan'
-          icon = '📋'
-          description = 'Detail item penerimaan barang'
-          category = 'Inventory'
-          break
-        case 'goods_issues':
-          label = 'Pengeluaran Barang'
-          icon = '📤'
-          description = 'Transaksi pengeluaran barang'
-          category = 'Inventory'
-          break
-        case 'goods_issue_items':
-          label = 'Item Pengeluaran'
-          icon = '📝'
-          description = 'Detail item pengeluaran barang'
-          category = 'Inventory'
-          break
-        case 'purchase_orders':
-          label = 'Purchase Order'
-          icon = '🛒'
-          description = 'Order pembelian barang'
-          category = 'Purchasing'
-          break
-        case 'purchase_order_items':
-          label = 'Item Purchase Order'
-          icon = '📄'
-          description = 'Detail item purchase order'
-          category = 'Purchasing'
-          break
-        case 'purchase_invoices':
-          label = 'Invoice Pembelian'
-          icon = '🧾'
-          description = 'Invoice pembelian supplier'
-          category = 'Purchasing'
-          break
-        case 'cash_bank_transactions':
-          label = 'Transaksi Kas/Bank'
-          icon = '💳'
-          description = 'Transaksi keuangan kas dan bank'
-          category = 'Accounting'
+        case 'estimasi':
+          label = 'Estimasi'
+          icon = '�'
+          description = 'Data estimasi service'
+          category = 'Transaksi'
           break
         default:
           label = tableName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
