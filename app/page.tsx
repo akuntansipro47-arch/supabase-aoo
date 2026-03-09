@@ -82,96 +82,133 @@ export default function Home() {
     return Object.keys(data[0])
   }
 
+  function formatTableName(tableName: string): string {
+    return tableName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Supabase CRUD Dashboard
-        </h1>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Database Tables</h2>
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                🏭 Supabase CRUD Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Complete Database Management System for Your Business
+              </p>
+            </div>
             <button
               onClick={fetchAllTables}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Refresh All
+              🔄 Refresh All Tables
             </button>
           </div>
-          
-          {loading && (
-            <div className="text-center py-8 text-gray-600">
-              Loading all tables...
-            </div>
-          )}
-          
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              Error: {error}
-            </div>
-          )}
-          
-          {!loading && !error && (
-            <div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Table to Manage:
-                </label>
-                <select
-                  value={selectedTable}
-                  onChange={(e) => {
-                    setSelectedTable(e.target.value)
-                    fetchSingleTable(e.target.value)
-                  }}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {TABLES.map(table => (
-                    <option key={table} value={table}>
-                      {table} ({tableData[table]?.length || 0} records)
-                    </option>
-                  ))}
-                </select>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="text-6xl mb-4">⏳</div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Loading Database...</h2>
+            <p className="text-gray-600">Please wait while we fetch all your data</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+            <div className="flex items-center">
+              <div className="text-4xl mr-4">⚠️</div>
+              <div>
+                <h2 className="text-xl font-semibold text-red-800 mb-2">Connection Error</h2>
+                <p className="text-red-600">{error}</p>
+                <p className="text-sm text-red-500 mt-2">Please check your environment variables and try again.</p>
               </div>
+            </div>
+          </div>
+        )}
 
-              {selectedTable && (
-                <DataTable
-                  tableName={selectedTable}
-                  data={tableData[selectedTable] || []}
-                  columns={getTableColumns(tableData[selectedTable] || [])}
-                  onRefresh={() => fetchSingleTable(selectedTable)}
-                  onEdit={(row) => {
-                    alert('Edit functionality coming soon! Record: ' + JSON.stringify(row))
-                  }}
-                  onDelete={(id) => {
-                    // Delete is handled in DataTable component
-                  }}
-                />
-              )}
+        {/* Main Content */}
+        {!loading && !error && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* Table Selector */}
+            <div className="mb-6">
+              <label className="block text-lg font-semibold text-gray-800 mb-3">
+                📊 Select Table to Manage:
+              </label>
+              <select
+                value={selectedTable}
+                onChange={(e) => {
+                  setSelectedTable(e.target.value)
+                  fetchSingleTable(e.target.value)
+                }}
+                className="block w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+              >
+                {TABLES.map(table => (
+                  <option key={table} value={table}>
+                    📋 {formatTableName(table)} ({tableData[table]?.length || 0} records)
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4">Table Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {TABLES.map(table => (
-                    <div 
-                      key={table} 
-                      className={`bg-gray-50 p-4 rounded cursor-pointer hover:bg-gray-100 ${selectedTable === table ? 'ring-2 ring-blue-500' : ''}`}
-                      onClick={() => {
-                        setSelectedTable(table)
-                        fetchSingleTable(table)
-                      }}
-                    >
-                      <div className="text-sm text-gray-600">{table}</div>
-                      <div className="text-lg font-semibold">
-                        {tableData[table]?.length || 0} records
+            {/* Selected Table */}
+            {selectedTable && (
+              <DataTable
+                tableName={selectedTable}
+                data={tableData[selectedTable] || []}
+                columns={getTableColumns(tableData[selectedTable] || [])}
+                onRefresh={() => fetchSingleTable(selectedTable)}
+                onEdit={(row) => {
+                  alert('Edit functionality coming soon! Record: ' + JSON.stringify(row, null, 2))
+                }}
+                onDelete={(id) => {
+                  // Delete is handled in DataTable component
+                }}
+              />
+            )}
+
+            {/* Summary Cards */}
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">📈 Database Summary</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {TABLES.map(table => (
+                  <div 
+                    key={table} 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg ${
+                      selectedTable === table 
+                        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    onClick={() => {
+                      setSelectedTable(table)
+                      fetchSingleTable(table)
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium text-gray-600">
+                        {formatTableName(table)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {tableData[table]?.length || 0} items
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-2xl font-bold text-gray-800">
+                      {tableData[table]?.length || 0}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Records
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </main>
   )

@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-// Dynamic import to avoid build-time errors
-import { supabase } from '@/lib/supabase'
 
 interface DataTableProps {
   tableName: string
@@ -63,54 +61,91 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
     setNewRow(prev => ({ ...prev, [field]: value }))
   }
 
+  // Generate appropriate input type based on field name
+  function getInputType(fieldName: string): string {
+    const lowerField = fieldName.toLowerCase()
+    if (lowerField.includes('email')) return 'email'
+    if (lowerField.includes('phone')) return 'tel'
+    if (lowerField.includes('date') || lowerField.includes('created_at') || lowerField.includes('updated_at')) return 'date'
+    if (lowerField.includes('price') || lowerField.includes('amount') || lowerField.includes('total') || lowerField.includes('cost')) return 'number'
+    if (lowerField.includes('description') || lowerField.includes('notes') || lowerField.includes('address')) return 'textarea'
+    return 'text'
+  }
+
+  function formatFieldName(fieldName: string): string {
+    return fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
   return (
     <div className="space-y-4">
       {/* Add Button */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">{tableName}</h3>
+        <h3 className="text-lg font-semibold text-gray-800">
+          {formatFieldName(tableName)} Management
+        </h3>
         <button
           onClick={() => setShowAddForm(true)}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
-          Add New Record
+          + Add New {formatFieldName(tableName.slice(0, -1))}
         </button>
       </div>
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="bg-gray-50 p-4 rounded-lg border">
-          <h4 className="font-medium mb-3">Add New {tableName.slice(0, -1)}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h4 className="font-semibold mb-4 text-blue-800">
+            Add New {formatFieldName(tableName.slice(0, -1))}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {columns.filter(col => col !== 'id' && col !== 'created_at' && col !== 'updated_at').map(column => (
               <div key={column}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {column}
+                  {formatFieldName(column)}
                 </label>
-                <input
-                  type="text"
-                  value={newRow[column] || ''}
-                  onChange={(e) => handleInputChange(column, e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={`Enter ${column}`}
-                />
+                {getInputType(column) === 'textarea' ? (
+                  <textarea
+                    value={newRow[column] || ''}
+                    onChange={(e) => handleInputChange(column, e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder={`Enter ${formatFieldName(column)}`}
+                  />
+                ) : getInputType(column) === 'number' ? (
+                  <input
+                    type="number"
+                    value={newRow[column] || ''}
+                    onChange={(e) => handleInputChange(column, parseFloat(e.target.value))}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={`Enter ${formatFieldName(column)}`}
+                  />
+                ) : (
+                  <input
+                    type={getInputType(column)}
+                    value={newRow[column] || ''}
+                    onChange={(e) => handleInputChange(column, e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={`Enter ${formatFieldName(column)}`}
+                  />
+                )}
               </div>
             ))}
           </div>
           <div className="flex gap-2 mt-4">
             <button
               onClick={handleAdd}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Save
+              💾 Save {formatFieldName(tableName.slice(0, -1))}
             </button>
             <button
               onClick={() => {
                 setShowAddForm(false)
                 setNewRow({})
               }}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
             >
-              Cancel
+              ❌ Cancel
             </button>
           </div>
         </div>
@@ -118,59 +153,74 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
 
       {/* Data Table */}
       {data.length > 0 ? (
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {columns.map(column => (
-                  <th
-                    key={column}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    {column}
-                  </th>
-                ))}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((row, index) => (
-                <tr key={index}>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h4 className="font-semibold text-gray-800">
+              📋 {formatFieldName(tableName)} Data ({data.length} records)
+            </h4>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
                   {columns.map(column => (
-                    <td key={column} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {String(row[column] || '')}
-                    </td>
+                    <th
+                      key={column}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                    >
+                      {formatFieldName(column)}
+                    </th>
                   ))}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex gap-2">
-                      {onEdit && (
-                        <button
-                          onClick={() => onEdit(row)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
-                          onClick={() => handleDelete(row.id)}
-                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                    🔧 Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.map((row, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    {columns.map(column => (
+                      <td key={column} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-gray-100">
+                        {column.includes('created_at') || column.includes('updated_at') || column.includes('date')
+                          ? new Date(row[column]).toLocaleDateString()
+                          : String(row[column] || '')}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-b border-gray-100">
+                      <div className="flex gap-2">
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(row)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                            title="Edit"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(row.id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            title="Delete"
+                          >
+                            🗑️ Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
-        <div className="p-8 text-center text-gray-500 border rounded-lg">
-          No data found in {tableName}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+          <div className="text-yellow-800">
+            <div className="text-4xl mb-2">📭</div>
+            <h4 className="text-lg font-semibold mb-2">No Data Found</h4>
+            <p>No {formatFieldName(tableName)} records found. Add your first {formatFieldName(tableName.slice(0, -1))} using the button above!</p>
+          </div>
         </div>
       )}
     </div>
