@@ -3,32 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import MenuPanel from '@/components/MenuPanel'
-import DynamicForm from '@/components/DynamicForm'
+import BengkelDynamicForm from '@/components/BengkelDynamicForm'
 import DataTable from '@/components/DataTable'
 
 interface TableData {
   [tableName: string]: any[]
 }
-
-const TABLES = [
-  'app_users',
-  'budget_allocations', 
-  'budget_periods',
-  'cash_bank_transactions',
-  'chart_of_accounts',
-  'company_profile',
-  'goods',
-  'goods_issue_items',
-  'goods_issues',
-  'goods_receipt_items',
-  'goods_receipts',
-  'job_types',
-  'mechanics',
-  'periods',
-  'purchase_invoices',
-  'purchase_order_items',
-  'purchase_orders'
-]
 
 export default function Home() {
   const [tableData, setTableData] = useState<TableData>({})
@@ -187,7 +167,7 @@ export default function Home() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">
-                🏭 Supabase Bengkel System
+                🏭 Sistem Bengkel
               </h1>
               {selectedTable && (
                 <div className="ml-6 flex items-center">
@@ -243,27 +223,27 @@ export default function Home() {
                 </p>
                 <div className="grid grid-cols-2 gap-4 text-left">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-blue-800 mb-2">📊 Master Data</h3>
+                    <h3 className="font-semibold text-blue-800 mb-2">📊 Database Master</h3>
                     <p className="text-sm text-blue-600">
-                      Kelola data dasar seperti pengguna, mekanik, barang, dan akun.
+                      Kelola data kendaraan, mekanik, supplier, barang/jasa.
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-green-800 mb-2">💰 Transaksi</h3>
+                    <h3 className="font-semibold text-green-800 mb-2">� Transaksi</h3>
                     <p className="text-sm text-green-600">
-                      Kelola transaksi pembelian, penjualan, dan keuangan.
+                      Kelola kendaraan masuk, work order, purchasing.
                     </p>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-purple-800 mb-2">📦 Inventory</h3>
+                    <h3 className="font-semibold text-purple-800 mb-2">� Service</h3>
                     <p className="text-sm text-purple-600">
-                      Pantau stok barang dan sparepart secara real-time.
+                      Estimasi service dan tracking pekerjaan.
                     </p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-orange-800 mb-2">📈 Laporan</h3>
+                    <h3 className="font-semibold text-orange-800 mb-2">� Inventory</h3>
                     <p className="text-sm text-orange-600">
-                      Lihat laporan keuangan dan operasional bengkel.
+                      Pantau stok sparepart dan barang.
                     </p>
                   </div>
                 </div>
@@ -304,7 +284,7 @@ export default function Home() {
 
             {/* Form */}
             {showForm && (
-              <DynamicForm
+              <BengkelDynamicForm
                 tableName={selectedTable!}
                 onSubmit={handleFormSubmit}
                 onCancel={() => {
@@ -348,6 +328,24 @@ export default function Home() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && !showForm && selectedTable && (!tableData[selectedTable] || tableData[selectedTable].length === 0) && (
+              <div className="bg-white rounded-lg shadow p-12 text-center">
+                <div className="text-6xl mb-4">📋</div>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Belum Ada Data</h2>
+                <p className="text-gray-600 mb-6">
+                  Belum ada data di {formatTableName(selectedTable).toLowerCase()}. 
+                  Klik "Tambah Data" untuk mulai menginput data.
+                </p>
+                <button
+                  onClick={handleAddNew}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  ➕ Tambah Data Pertama
+                </button>
+              </div>
             )}
           </div>
         )}
