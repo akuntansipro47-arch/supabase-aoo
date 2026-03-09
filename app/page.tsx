@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import DataTable from '@/components/DataTable'
 
 interface TableData {
   [tableName: string]: any[]
@@ -17,7 +18,7 @@ const TABLES = [
   'goods',
   'goods_issue_items',
   'goods_issues',
-  'goods_receipt_items',
+  'goods_receipts',
   'goods_receipts',
   'job_types',
   'mechanics',
@@ -47,7 +48,7 @@ export default function Home() {
           const { data: tableData, error } = await supabase
             .from(tableName)
             .select('*')
-            .limit(10) // Limit to 10 records for performance
+            .limit(50) // Increased limit for better editing
           
           if (!error) {
             data[tableName] = tableData || []
@@ -69,6 +70,23 @@ export default function Home() {
     }
   }
 
+  async function fetchSingleTable(tableName: string) {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(50)
+      
+      if (!error) {
+        setTableData(prev => ({ ...prev, [tableName]: data || [] }))
+      } else {
+        alert('Error fetching data: ' + error.message)
+      }
+    } catch (err) {
+      alert('Error: ' + (err as Error).message)
+    }
+  }
+
   function getTableColumns(data: any[]): string[] {
     if (!data || data.length === 0) return []
     return Object.keys(data[0])
@@ -78,7 +96,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Supabase Dashboard
+          Supabase CRUD Dashboard
         </h1>
         
         <div className="bg-white rounded-lg shadow p-6">
@@ -88,7 +106,7 @@ export default function Home() {
               onClick={fetchAllTables}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Refresh Data
+              Refresh All
             </button>
           </div>
           
@@ -109,11 +127,14 @@ export default function Home() {
               {/* Table Selector */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Table:
+                  Select Table to Manage:
                 </label>
                 <select
                   value={selectedTable}
-                  onChange={(e) => setSelectedTable(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedTable(e.target.value)
+                    fetchSingleTable(e.target.value)
+                  }}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {TABLES.map(table => (
@@ -124,57 +145,43 @@ export default function Home() {
                 </select>
               </div>
 
-              {/* Selected Table Data */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-100 px-4 py-2 font-medium">
-                  {selectedTable} ({tableData[selectedTable]?.length || 0} records)
-                </div>
-                
-                {tableData[selectedTable] && tableData[selectedTable].length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          {getTableColumns(tableData[selectedTable]).map(column => (
-                            <th
-                              key={column}
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              {column}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {tableData[selectedTable].map((row, index) => (
-                          <tr key={index}>
-                            {getTableColumns(tableData[selectedTable]).map(column => (
-                              <td key={column} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {String(row[column] || '')}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    No data found in {selectedTable}
-                  </div>
-                )}
-              </div>
+              {/* Selected Table with CRUD */}
+              {selectedTable && (
+                <DataTable
+                  tableName={selectedTable}
+                  data={tableData[selectedTable] || []}
+                  columns={getTableColumns(tableData[selectedTable] || [])}
+                  onRefresh={() => fetchSingleTable(selectedTable)}
+                  onEdit={(row) => {
+                    // TODO: Implement edit modal
+                    alert('Edit functionality coming soon! Record: ' + JSON.stringify(row))
+                  }}
+                  onDelete={(id) => {
+                    // Delete is handled in DataTable component
+                  }}
+                />
+              )}
 
               {/* Summary */}
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                {TABLES.map(table => (
-                  <div key={table} className="bg-gray-50 p-4 rounded">
-                    <div className="text-sm text-gray-600">{table}</div>
-                    <div className="text-lg font-semibold">
-                      {tableData[table]?.length || 0} records
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">Table Summary</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {TABLES.map(table => (
+                    <div 
+                      key={table} 
+                      className={`bg-gray-50 p-4 rounded cursor-pointer hover:bg-gray-100 ${selectedTable === table ? 'ring-2 ring-blue-500' : ''}`}
+                      onClick={() => {
+                        setSelectedTable(table)
+                        fetchSingleTable(table)
+                      }}
+                    >
+                      <div className="text-sm text-gray-600">{table}</div>
+                      <div className="text-lg font-semibold">
+                        {tableData[table]?.length || 0} records
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
