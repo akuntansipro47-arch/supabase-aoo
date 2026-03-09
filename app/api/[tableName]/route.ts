@@ -22,31 +22,11 @@ export async function GET(request: NextRequest, { params }: { params: { tableNam
       }, { status: 500 })
     }
     
-    // Test connection first
     const supabase = createClient(supabaseUrl, supabaseKey)
-    
-    try {
-      // Simple health check
-      const { data: testData, error: testError } = await supabase
-        .from('app_users')
-        .select('count')
-        .limit(1)
-      
-      if (testError && !testError.message.includes('does not exist')) {
-        console.error('Connection test failed:', testError)
-        return NextResponse.json({ 
-          error: `Koneksi database gagal: ${testError.message}` 
-        }, { status: 500 })
-      }
-    } catch (connErr) {
-      console.error('Connection error:', connErr)
-      return NextResponse.json({ 
-        error: `Tidak dapat terhubung ke database: ${(connErr as Error).message}` 
-      }, { status: 500 })
-    }
     
     console.log(`Fetching data from table: ${tableName}`)
     
+    // Try to fetch data with better error handling
     const { data, error } = await supabase
       .from(tableName)
       .select('*')
@@ -74,7 +54,10 @@ export async function GET(request: NextRequest, { params }: { params: { tableNam
     }
     
     console.log(`Successfully fetched ${data?.length || 0} rows from ${tableName}`)
+    
+    // Return data even if empty
     return NextResponse.json(data || [])
+    
   } catch (err) {
     console.error('API error:', err)
     return NextResponse.json({ 
