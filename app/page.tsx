@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import DataTable from '@/components/DataTable'
 
 interface TableData {
@@ -32,10 +33,39 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTable, setSelectedTable] = useState<string>('app_users')
+  const [user, setUser] = useState<any>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    fetchAllTables()
+    // Check if user is logged in
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me')
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData.user)
+          fetchAllTables()
+        } else {
+          // Redirect to login if not authenticated
+          router.push('/login')
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err)
+        router.push('/login')
+      }
+    }
+
+    checkAuth()
   }, [])
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/login')
+    } catch (err) {
+      console.error('Logout failed:', err)
+    }
+  }
 
   async function fetchAllTables() {
     try {
@@ -87,28 +117,41 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                🏭 Supabase CRUD Dashboard
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">
+                🏭 Supabase Bengkel System
               </h1>
-              <p className="text-gray-600">
-                Complete Database Management System for Your Business
-              </p>
+              <span className="ml-4 text-sm text-gray-500">
+                Complete Workshop Management
+              </span>
             </div>
-            <button
-              onClick={fetchAllTables}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              🔄 Refresh All Tables
-            </button>
+            
+            <div className="flex items-center space-x-4">
+              {user && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">
+                    👤 {user.name || user.email || 'User'}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                  >
+                    � Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+      </header>
 
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Loading State */}
         {loading && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
@@ -132,8 +175,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Main Content */}
-        {!loading && !error && (
+        {/* Main Dashboard */}
+        {!loading && !error && user && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             {/* Table Selector */}
             <div className="mb-6">
