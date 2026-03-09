@@ -69,14 +69,30 @@ export default function Home() {
       setLoading(true)
       setError(null)
       
+      console.log(`🔍 Fetching data for table: ${tableName}`)
+      
       const response = await fetch(`/api/${tableName}`)
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error('❌ API Error:', errorText)
+        throw new Error(`Failed to fetch data: ${errorText}`)
       }
+      
       const data = await response.json()
-      setTableData(prev => ({ ...prev, [tableName]: data || [] }))
+      console.log(`✅ Fetched ${data.length} records for ${tableName}`)
+      
+      setTableData(prev => ({
+        ...prev,
+        [tableName]: data
+      }))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching data')
+      console.error('❌ Fetch error:', err)
+      setError(`Gagal memuat data ${tableName}: ${(err as Error).message}`)
+      setTableData(prev => ({
+        ...prev,
+        [tableName]: []
+      }))
     } finally {
       setLoading(false)
     }
@@ -109,9 +125,18 @@ export default function Home() {
   }
 
   async function handleDelete(id: any) {
-    if (!selectedTable || !confirm('Apakah Anda yakin ingin menghapus data ini?')) return
+    if (!selectedTable) {
+      console.error('❌ No table selected for delete')
+      return
+    }
+    
+    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+      return
+    }
 
     try {
+      console.log(`🗑️ Deleting record with ID: ${id} from table: ${selectedTable}`)
+      
       const response = await fetch(`/api/${selectedTable}?id=${id}`, {
         method: 'DELETE',
       })
@@ -121,14 +146,17 @@ export default function Home() {
         throw new Error(error.error || 'Failed to delete data')
       }
 
+      console.log('✅ Delete successful')
       // Refresh data
       await fetchTableData(selectedTable)
     } catch (err) {
+      console.error('❌ Delete error:', err)
       alert('Error: ' + (err as Error).message)
     }
   }
 
   function handleEdit(row: any) {
+    console.log('📝 Edit function called with:', row)
     setEditingData(row)
     setShowForm(true)
   }
