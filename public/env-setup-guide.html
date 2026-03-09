@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Setup Environment Variables Vercel</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .screenshot {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .variable {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Panduan Setup Environment Variables</h1>
+        <p>Supabase Bengkel System - Vercel Deployment</p>
+    </div>
+
+    <div class="warning">
+        <strong>⚠️ PENTING:</strong> Environment variables harus di-set di Vercel Dashboard, bukan di kode!
+    </div>
+
+    <div class="step">
+        <h2>📋 Langkah 1: Buka Vercel Dashboard</h2>
+        <ol>
+            <li>Login ke <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a></li>
+            <li>Pilih project Anda: <strong>supabase-aoo</strong></li>
+            <li>Klik tab <strong>Settings</strong></li>
+            <li>Klik menu <strong>Environment Variables</strong></li>
+        </ol>
+        
+        <div class="screenshot">
+            📸 Vercel Dashboard → Settings → Environment Variables
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>🔧 Langkah 2: Tambah Environment Variables</h2>
+        <p>Tambahkan 2 variable berikut:</p>
+        
+        <h3>Variable 1:</h3>
+        <div class="code">
+            <strong>Name:</strong> <span class="variable">NEXT_PUBLIC_SUPABASE_URL</span><br>
+            <strong>Value:</strong> https://efkkdeoheekcxwirungu.supabase.co<br>
+            <strong>Environment:</strong> Production, Preview, Development
+        </div>
+        
+        <h3>Variable 2:</h3>
+        <div class="code">
+            <strong>Name:</strong> <span class="variable">NEXT_PUBLIC_SUPABASE_ANON_KEY</span><br>
+            <strong>Value:</strong> [Masukkan full anon key Anda di sini]<br>
+            <strong>Environment:</strong> Production, Preview, Development
+        </div>
+        
+        <div class="warning">
+            <strong>🔑 ANON KEY:</strong> Dapatkan full anon key dari Supabase Dashboard → Settings → API
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>💾 Langkah 3: Save dan Redeploy</h2>
+        <ol>
+            <li>Klik <strong>Save</strong> setelah menambah setiap variable</li>
+            <li>Setelah semua variable ditambah, klik <strong>Redeploy</strong></li>
+            <li>Tunggu proses redeploy selesai (2-3 menit)</li>
+            <li>Refresh aplikasi Anda</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h2>✅ Langkah 4: Verifikasi Setup</h2>
+        <p>Buka endpoint berikut untuk verifikasi:</p>
+        <div class="code">
+            <strong>Debug Environment:</strong><br>
+            https://your-app.vercel.app/api/env-check
+        </div>
+        
+        <div class="code">
+            <strong>Test Connection:</strong><br>
+            https://your-app.vercel.app/api/test-connection
+        </div>
+        
+        <div class="success">
+            ✅ Jika berhasil, Anda akan melihat "success: true" dan data table
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>🔍 Troubleshooting</h2>
+        
+        <h3>Jika masih error "Database tidak dikonfigurasi":</h3>
+        <ul>
+            <li>Pastikan environment variables tepat (case-sensitive)</li>
+            <li>Cek spelling: <span class="variable">NEXT_PUBLIC_SUPABASE_URL</span> (bukan SUPABASE_URL)</li>
+            <li>Pastikan anon key lengkap (dimulai dengan eyJhbGciOiJIUzI1NiIs...)</li>
+            <li>Redeploy lagi setelah menambah variables</li>
+        </ul>
+        
+        <h3>Jika table tidak ditemukan:</h3>
+        <ul>
+            <li>Buat table di Supabase SQL Editor</li>
+            <li>Cek RLS policies di Supabase</li>
+            <li>Pastikan anon key memiliki akses read</li>
+        </ul>
+    </div>
+
+    <div class="success">
+        <h2>🎉 Setup Selesai!</h2>
+        <p>Setelah environment variables ter-set dengan benar, aplikasi akan menampilkan data dari Supabase database Anda.</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; color: #666;">
+        <p>📞 Butuh bantuan? Hubungi developer atau cek <a href="/api/env-check" target="_blank">/api/env-check</a></p>
+    </div>
+</body>
+</html>
