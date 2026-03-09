@@ -25,9 +25,10 @@ export default function DataTable({ tableName, data, columns, onRefresh, onEdit,
     }
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from(tableName)
-        .insert([newRow])
+        .insert([newRow] as any)
+        .select()
       
       if (!error) {
         setShowAddForm(false)
